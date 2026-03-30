@@ -1,3 +1,5 @@
+# Infrastructure as Code
+
 - [Infrastructure as Code](#infrastructure-as-code)
   - [DevOps mindset](#devops-mindset)
   - [What is IaC?](#what-is-iac)
@@ -28,8 +30,6 @@
   - [`.gitidnore` for Terraform](#gitidnore-for-terraform)
     - [Example Template `.gitignore`:](#example-template-gitignore)
 
-
-# Infrastructure as Code
 
 ## DevOps mindset
 
