@@ -16,9 +16,17 @@
     - [Setting Up AWS Credentials Using Environment Variables](#setting-up-aws-credentials-using-environment-variables)
     - [1. AWS Credentials Needed](#1-aws-credentials-needed)
     - [2. Set Environment Variables on Windows](#2-set-environment-variables-on-windows)
-      - [1. Using PowerShell](#1-using-powershell)
-      - [2. To provide Terraform with credentials or configuration from any folder:](#2-to-provide-terraform-with-credentials-or-configuration-from-any-folder)
+      - [2.1 Using PowerShell](#21-using-powershell)
+      - [2.2 Using Windows → Settings](#22-using-windows--settings)
   - [Terraform Script for Creating an AWS EC2 Instance](#terraform-script-for-creating-an-aws-ec2-instance)
+  - [Terraform Core Commands and Workflow](#terraform-core-commands-and-workflow)
+    - [1. `terraform init`](#1-terraform-init)
+    - [2. `terraform fmt`](#2-terraform-fmt)
+    - [3. `terraform plan`](#3-terraform-plan)
+    - [4. `terraform apply`](#4-terraform-apply)
+    - [5. `terraform destroy`](#5-terraform-destroy)
+  - [`.gitidnore` for Terraform](#gitidnore-for-terraform)
+    - [Example Template `.gitignore`:](#example-template-gitignore)
 
 
 # Infrastructure as Code
@@ -226,16 +234,17 @@ These are provided by AWS IAM.
 
 ### 2. Set Environment Variables on Windows
 
-#### 1. Using PowerShell
+#### 2.1 Using PowerShell
 ```powershell
 $Env:AWS_ACCESS_KEY_ID="your_access_key_id_here"
 $Env:AWS_SECRET_ACCESS_KEY="your_secret_access_key_here"
 ```
 
-#### 2. To provide Terraform with credentials or configuration from any folder:
+#### 2.2 Using Windows → Settings
+To provide Terraform with credentials or configuration from any folder:
 
 - Press `Win + R`, type `sysdm.cpl` → Enter.
-- Go to Advanced → Environment Variables.
+- Go to **Advanced** → **Environment Variables**.
 - In the User variables section, click **New**:
 ```powershell
 Variable name: AWS_ACCESS_KEY_ID
@@ -244,9 +253,18 @@ Variable value: the value you want to assign
 - Click OK and close all windows.
 - Terraform will automatically read these variables when running commands, so you don’t need to pass them manually.
 
+**To check if set up properly, restart terminal:**
+
+```bash
+# Git Bash: 
+printenv AWS_ACCESS_KEY
+```
+
 ## Terraform Script for Creating an AWS EC2 Instance
 
 ```bash
+# main.tf
+
 # Provider Block
 # --------------------------------------------------
 # Specifies the AWS cloud provider for Terraform.
@@ -261,6 +279,7 @@ provider "aws" {
 
 # Resource Block
 # -------------------------------------------------
+# You state what you want and its desired settings using resource blocks. 
 # declares a new EC2 instance named first_app_instance
 resource "aws_instance" "first_app_instance" {
   # Which AMI
@@ -276,29 +295,77 @@ resource "aws_instance" "first_app_instance" {
   associate_public_ip_address = true
 
   # Name of recourse
+  # assigns a human-readable name to the instance
   tags = {
     Name = "tech601-natalia-tf-instance"
   }
 }
-
 ```
 
+```bash
+# variable.tf
 
+# This file declares a Terraform variable named app_ami_id.
+# The variable stores the AMI ID (Amazon Machine Image) used when creating an EC2 instance.
 
-provider bock in main.tf
-`terraform init`
+# By using a variable instead of hardcoding the AMI in the resource block, the configuration becomes:
 
-terraform fmt - formats main.tf
+# Reusable – you can change the AMI without editing multiple places in the code.
+# Flexible – different environments can use different AMIs.
+# Clearer – separates configuration from the resource definition.
 
-terraform plan - use credentials, check main.tf, is like git status
+variable "app_ami_id" {
+  default = "ami-041f717d2124df2b1"
+}
+```
 
-terraform apply
+---
 
-terraform destroy
+## Terraform Core Commands and Workflow
 
-use .gitignore for .terraform
+Terraform has a standard workflow for managing infrastructure. The main commands are described below:
 
-Template .gitignore
+### 1. `terraform init`
+- **Purpose:** Initialise a Terraform working directory.  
+- **What it does:**  
+  - Downloads provider plugins (e.g., AWS, Azure)  
+  - Prepares the directory for Terraform operations  
+
+### 2. `terraform fmt`
+- **Purpose:** Format Terraform configuration files consistently.
+- **What it does:**
+  - Automatically fixes indentation, spacing, and syntax style
+  - Ensures .tf files are readable and standardised
+
+### 3. `terraform plan`
+- **Purpose:** Preview changes Terraform will make to match your code.
+- **What it does:**
+  - Compares desired state (configuration files) with current state (tf.state)
+  - Shows a detailed execution plan of resources to create, update, or delete
+
+### 4. `terraform apply`
+- **Purpose:** Apply the planned changes to your infrastructure.
+- **What it does:**
+  - Creates, updates, or deletes resources to match the declared desired state
+  - Requires confirmation (can use `-auto-approve` to skip)
+
+### 5. `terraform destroy`
+- **Purpose:** Remove all resources managed by Terraform.
+- **What it does:**
+  - Deletes infrastructure defined in your configuration
+  - Useful for cleaning up test environments or decommissioning resources
+  - Requires confirmation 
+
+## `.gitidnore` for Terraform
+
+**Files to Ignore**
+- `terraform.tfstate` – tracks real infrastructure state. Contains resource IDs and metadata.
+- `terraform.tfstate.backup` – backup of the state file.
+- `variables.tf` – may contain sensitive defaults (like AMI IDs, credentials, or secrets).
+
+You can also ignore: `.terraform/` folder, `*.tfvars`, crash logs, and override files.
+
+### Example Template `.gitignore`:
 
 ```bash
 # Local .terraform directories
